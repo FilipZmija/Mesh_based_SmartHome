@@ -6,6 +6,9 @@
 //************************************************************
 #include "painlessMesh.h"
 #include <WiFiClient.h>
+#include <Arduino_JSON.h>
+
+
 #define MESH_PREFIX "MyMesh"
 #define MESH_PASSWORD "12345678"
 #define MESH_PORT 5555
@@ -50,31 +53,35 @@ void setup() {
   client.print("hello world I am connected");
   Serial.println("Connection on port successful");
 }
+unsigned long currentTime = 0;
+unsigned long timeDiff = 0;
+unsigned long previousTime = 0;
 
 void loop() {
-
+  // komunikacja z serwerem aka odbieranie
   mesh.update();
+  char paczkaClient[200];
+  bool dataInBuffer = false;
+  String whatToDo;
+  //if you are connected and data is available
+
+
+  while (client.available() > 0) {
+    c = client.read();
+    whatToDo += c;
+    dataInBuffer = true;
+  }
+
+  if (dataInBuffer) {
+    Serial.println(whatToDo);
+    mesh.sendBroadcast(whatToDo);
+    dataInBuffer = false;
+  }
+
 }
+
 
 void receivedCallback(uint32_t from, String &msg) {
   Serial.printf("bridge: Received from %u msg=%s\n", from, msg.c_str());
   client.printf(msg.c_str());
-  // komunikacja z serwerem aka odbieranie
-  char c;
-  char paczkaClient[200];
-  String DoSo;
-  //if you are connected and data is available
-  if (client.available() > 0) {
-
-    String whatToDo;
-    for (int i = 0; i < 3; i = i + 1) {
-      if (i == 0) {
-        memset(paczkaClient, 0, sizeof(paczkaClient));
-      }
-      c = client.read();
-      paczkaClient[i] = c;
-    }
-    whatToDo = String(paczkaClient);
-    Serial.print(whatToDo);w
-  }
 }
