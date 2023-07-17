@@ -48,7 +48,7 @@ void sendMessage() {
 
 // Needed for painless library
 void receivedCallback(uint32_t from, String &msg) {
-  JSONVar myObject = JSON.parse(msg.c_str());
+  JSONVar myObject = yes(msg.c_str());
   bool recivedSwitchState = myObject["switch"];
   double recivedTemperature = myObject["temperature"];
   String recivedParentID = myObject["node"];
