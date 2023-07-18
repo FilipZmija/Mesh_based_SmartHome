@@ -12,7 +12,7 @@ class Actuator {
 		this.parent;
 		this.status;
 	}
-	configureActuator(parent, actuatorType) {
+	configure(parent, actuatorType) {
 		this.actuatorType = actuatorType;
 		this.parent = parent;
 	}
@@ -52,7 +52,7 @@ class Sensor {
 		this.parent;
 		this.state;
 	}
-	configureSensor(children, sensorType) {
+	configure(children, sensorType) {
 		this.sensorType = sensorType;
 		this.children = children;
 	}
