@@ -1,10 +1,10 @@
 class ControlDevice {
-	constructor({ node, type, mode, parent, status }) {
+	constructor({ node, type, mode, parent, order }) {
 		this.node = node;
 		this.type = type;
 		this.mode = mode;
 		this.parent = parent;
-		this.status = status;
+		this.order = order;
 	}
 	get message() {
 		return {
@@ -12,7 +12,27 @@ class ControlDevice {
 			type: this.type,
 			mode: this.mode,
 			parent: this.parent,
-			status: this.status,
+			order: this.order,
+		};
+	}
+}
+
+class Sensor {
+	constructor(node, type, mode, children) {
+		this.node = node;
+		this.type = type;
+		this.mode = mode;
+		this.children = children;
+	}
+	configure(children) {
+		this.children = children;
+	}
+	get properties() {
+		return {
+			node: this.node,
+			type: this.type,
+			mode: this.mode,
+			children: this.children,
 		};
 	}
 }
@@ -40,13 +60,13 @@ class Actuator {
 }
 
 class TemperatureActuator extends Actuator {
-	constructor({ node, type, mode, parent, status }) {
-		super(node, type, mode, parent, status);
+	constructor({ node, type, mode, parent, order }) {
+		super(node, type, mode, parent);
 	}
 
-	setSwitch(sensorsInSystem) {
-		this.status = !this.status;
-		const message = new ControlDevice(this);
+	setSwitch(order, sensorsInSystem) {
+		const object = { ...this, order };
+		const message = new ControlDevice(object);
 		if (this.parent) {
 			sensorsInSystem.forEach((sensor) => {
 				if (sensor.parent === this.node) {
@@ -54,6 +74,7 @@ class TemperatureActuator extends Actuator {
 				}
 			});
 		}
+		this.order = undefined;
 		return message.message;
 	}
 
@@ -69,12 +90,12 @@ class TemperatureActuator extends Actuator {
 }
 
 class LightActuator extends Actuator {
-	constructor({ node, type, mode, parent, status }) {
+	constructor({ node, type, mode, parent, status, order }) {
 		super(node, type, mode, parent, status);
 	}
-	setSwitch() {
-		this.status = !this.status;
-		const message = new ControlDevice(this);
+	setSwitch(order) {
+		const object = { ...this, order };
+		const message = new ControlDevice(object);
 		return message.message;
 	}
 	get properties() {
@@ -85,27 +106,6 @@ class LightActuator extends Actuator {
 			parent: this.parent,
 			status: this.status,
 			expectedTemperature: this.expectedTemperature,
-		};
-	}
-}
-
-class Sensor {
-	constructor(node, type, mode, children) {
-		this.node = node;
-		this.type = type;
-		this.mode = mode;
-		this.children = children;
-	}
-	configure(children) {
-		this.children = children;
-	}
-	get properties() {
-		return {
-			node: this.node,
-			type: this.type,
-			mode: this.mode,
-			children: this.children,
-			state: this.state,
 		};
 	}
 }
