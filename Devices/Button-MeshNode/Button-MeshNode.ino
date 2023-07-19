@@ -7,10 +7,16 @@
 
 #include "painlessMesh.h"
 #include <Arduino_JSON.h>
+#include <WiFi.h>
 
 #define MESH_PREFIX "MyMesh"
 #define MESH_PASSWORD "12345678"
 #define MESH_PORT 5555
+
+const char* ssid = "Airbox-011B";
+const char* password = "92443498";
+
+IPAddress server(10, 101, 125, 3);
 
 const int BUTTON_PIN = 13;
 
@@ -18,7 +24,7 @@ Scheduler userScheduler;  // to control your personal task
 painlessMesh mesh;
 bool buttonState;
 bool prevButtonState;
-
+WiFiClient client;
 String nodeID = String(mesh.getNodeId());
 String childrenID = "2808636797";
 String sensorType = "switchSensor";
@@ -62,7 +68,7 @@ void sendMessage() {
 
 
 // Needed for painless library
-void receivedCallback(uint32_t from, String &msg) {
+void receivedCallback(uint32_t from, String& msg) {
   Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
 }
 
@@ -79,22 +85,51 @@ void nodeTimeAdjustedCallback(int32_t offset) {
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
+
+  // Connect to your local Wi-Fi network
+  delay(1000);
+
+  // WiFi.mode(WIFI_STA);  //Optional
+  // WiFi.begin(ssid, password);
+  // Serial.println("\nConnecting");
+
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   Serial.print(".");
+  //   delay(100);
+  // }
+
+  // Serial.println("\nConnected to the WiFi network");
+  // Serial.print("Local ESP32 IP: ");
+  // Serial.println(WiFi.localIP());
+
+
+
+
+
   pinMode(BUTTON_PIN, INPUT);
   //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   mesh.setDebugMsgTypes(ERROR | STARTUP);  // set before init() so that you can see startup messages
 
-  mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT);
+  mesh.init(MESH_PREFIX, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
+
+
+
+  //passed fnc to mesh
   mesh.onReceive(&receivedCallback);
   mesh.onNewConnection(&newConnectionCallback);
   mesh.onChangedConnections(&changedConnectionCallback);
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
   userScheduler.addTask(taskSendMessage);
+  mesh.setContainsRoot(true);
   taskSendMessage.enable();
+
+  
 }
 
 
 void loop() {
+  // client.print("hello here");
   // it will run the user scheduler as well
   const bool newToggle = toggle(toggleState);
   if (newToggle != toggleState) {
@@ -105,8 +140,9 @@ void loop() {
     nodeID += mesh.getNodeId();
 
     data = getReadings(nodeID, toggleState);
-
     mesh.sendBroadcast(data);
+    String conn = mesh.subConnectionJson();
+    Serial.println(conn);
   }
   mesh.update();
 }
