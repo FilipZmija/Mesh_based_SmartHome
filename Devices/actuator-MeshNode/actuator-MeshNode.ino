@@ -14,30 +14,58 @@
 
 const int OUT_PIN = 13;
 
+unsigned long currentTime = 0;
+unsigned long timeDiff = 0;
+unsigned long previousTime = 0;
+
 Scheduler userScheduler;  // to control your personal task
 painlessMesh mesh;
 
 // User stub
 void sendMessage();  // Prototype so PlatformIO doesn't complain
+//Device info
 
 String nodeID = "";
 String parentID = "701010689";
-String actuatorType = "lightActuator";  // "RTC";
+String type = "actuator";  // "RTC";
+String mode = "light";
+
 bool status = 0;
 bool switchState = 0;
 double temperature = 0;
 
-//creating JSON object
-String getReadings(String nodeID, bool status) {
-  JSONVar jsonReadings;
-  jsonReadings["node"] = nodeID;
-  jsonReadings["status"] = status;
-  jsonReadings["parent"] = parentID;
-  String readings = JSON.stringify(jsonReadings);
-  return readings;
-};
+//create headers to let know clients what is the request for
+//create message for passing data to others
+String createMessage(String requestType, String nodeID, String type, String mode, bool status) {
+  StaticJsonDocument<200> jsonDoc;
+  JsonObject headers = jsonDoc.createNestedObject("headers");
+  JsonObject body = jsonDoc.createNestedObject("body");
+  headers["type"] = requestType;
+  body["node"] = nodeID;
+  body["type"] = type;
+  body["mode"] = mode;
+  body["parent"] = parentID;
+  body["status"] = status;
+  String jsonString;
+  serializeJson(jsonDoc, jsonString);
+  return jsonString;
+}
 
-String data = getReadings(nodeID, temperature);
+String createIndentifyMessage(String requestType, String nodeID, String type, String mode, String parentID) {
+  StaticJsonDocument<200> jsonDoc;
+  JsonObject headers = jsonDoc.createNestedObject("headers");
+  JsonObject body = jsonDoc.createNestedObject("body");
+  headers["type"] = requestType;
+  body["node"] = nodeID;
+  body["type"] = type;
+  body["mode"] = mode;
+  body["parent"] = parentID;
+  String jsonString;
+  serializeJson(jsonDoc, jsonString);
+  return jsonString;
+}
+
+String data = createMessage("post/info", nodeID, type, mode, status);
 
 Task taskSendMessage(TASK_SECOND * 1, TASK_FOREVER, &sendMessage);
 
@@ -48,19 +76,39 @@ void sendMessage() {
 
 // Needed for painless library
 void receivedCallback(uint32_t from, String &msg) {
-  JSONVar myObject = yes(msg.c_str());
-  bool recivedSwitchState = myObject["switch"];
-  double recivedTemperature = myObject["temperature"];
-  String recivedParentID = myObject["node"];
-  String recivedSensorType = myObject["sensorType"];
+  StaticJsonDocument<400> jsonDoc;
+  DeserializationError error = deserializeJson(jsonDoc, msg.c_str());
+  String requestType = jsonDoc["headers"]["type"];
 
-  if (parentID == recivedParentID) {
-    if (recivedSensorType = "switchSensor") {
-      switchState = recivedSwitchState;
-    } else if (recivedSensorType = "temperatureSensor")
-      temperature = recivedTemperature;
+  if (requestType == "post/control") {
+    JsonObject body = jsonDoc["body"];
+    String jsonString;
+    serializeJson(body, jsonString);
+
+    double recivedTemperature = body["temperature"];
+    String recivedChildrenID = body["children"];
+    String recivedParentType = body["type"];
+    String recivedParentMode = body["mode"];
+    String recivedParentOrder = body["order"];
+
+    if (nodeID == recivedChildrenID) {
+      if (recivedParentMode = "switch") {
+        if (recivedParentOrder == "toggle") {
+          switchState = !switchState;
+        } else if (recivedParentOrder == "off") {
+          switchState = false;
+        } else if (recivedParentOrder == "on") {
+          switchState = true;
+        }
+      } else if (recivedParentMode = "temperature")
+        temperature = recivedTemperature;
+    }
+  } else if (requestType == "post/devices") {
+    String message = createIndentifyMessage("post/indentifyDevice ", nodeID, type, mode, parentID);
+    mesh.sendBroadcast(message);
   }
-  Serial.printf(msg.c_str());
+
+  Serial.println(msg.c_str());
 }
 
 
@@ -79,8 +127,8 @@ void nodeTimeAdjustedCallback(int32_t offset) {
 
 void setup() {
   Serial.begin(115200);
-
   pinMode(OUT_PIN, OUTPUT);
+
   //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   mesh.setDebugMsgTypes(ERROR | STARTUP);  // set before init() so that you can see startup messages
 
@@ -98,13 +146,13 @@ void setup() {
 void loop() {
 
   if (switchState != status) {
-    if (actuatorType == "lightActuator") {
+    if (mode == "light") {
       status = switchState;
       digitalWrite(OUT_PIN, status ? HIGH : LOW);
-    } else if (actuatorType == "RTC") {
+    } else if (mode == "RTC") {
       Serial.println("Not ready to serve this yet!");
     }
-    data = getReadings(nodeID, status);
+    data = createMessage("post/info", nodeID, type, mode, status);
     mesh.sendBroadcast(data);
   }
 
