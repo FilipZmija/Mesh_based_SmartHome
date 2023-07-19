@@ -1,25 +1,58 @@
-class Device {
-	constructor(node, type) {
+class ControlDevice {
+	constructor({ node, type, mode, parent, order }) {
 		this.node = node;
 		this.type = type;
+		this.mode = mode;
+		this.parent = parent;
+		this.order = order;
+	}
+	get message() {
+		return {
+			node: this.node,
+			type: this.type,
+			mode: this.mode,
+			parent: this.parent,
+			order: this.order,
+		};
+	}
+}
+
+class Sensor {
+	constructor(node, type, mode, children) {
+		this.node = node;
+		this.type = type;
+		this.mode = mode;
+		this.children = children;
+	}
+	configure(children) {
+		this.children = children;
+	}
+	get properties() {
+		return {
+			node: this.node,
+			type: this.type,
+			mode: this.mode,
+			children: this.children,
+		};
 	}
 }
 
 class Actuator {
-	constructor(node, actuatorType) {
+	constructor(node, type, mode, parent, status) {
 		this.node = node;
-		this.actuatorType = actuatorType;
-		this.parent;
-		this.status;
+		this.type = type;
+		this.mode = mode;
+		this.parent = parent;
+		this.status = status;
 	}
-	configureActuator(parent, actuatorType) {
-		this.actuatorType = actuatorType;
+	configure(parent) {
 		this.parent = parent;
 	}
 	get properties() {
 		return {
 			node: this.node,
-			actuatorType: this.actuatorType,
+			type: this.type,
+			mode: this.mode,
 			status: this.status,
 			parent: this.parent,
 		};
@@ -27,68 +60,84 @@ class Actuator {
 }
 
 class TemperatureActuator extends Actuator {
-	constructor(node, actuatorType, parent, status, expectedTemperature) {
-		super(node, actuatorType, parent, status);
-		this.expectedTemperature = expectedTemperature;
+	constructor({ node, type, mode, parent, order }) {
+		super(node, type, mode, parent);
 	}
-	setExpectedTemperature(temperature) {
-		this.expectedTemperature = temperature;
+
+	setSwitch(order, sensorsInSystem) {
+		const object = { ...this, order };
+		const message = new ControlDevice(object);
+		if (this.parent) {
+			sensorsInSystem.forEach((sensor) => {
+				if (sensor.parent === this.node) {
+					expectedTemperature = undefined;
+				}
+			});
+		}
+		this.order = undefined;
+		return message.message;
 	}
+
 	get properties() {
 		return {
 			node: this.node,
-			actuatorType: this.actuatorType,
+			type: this.type,
+			mode: this.mode,
 			parent: this.parent,
-			expectedTemperature: this.expectedTemperature,
 			status: this.status,
 		};
 	}
 }
 
-class Sensor {
-	constructor(node, sensorType) {
-		this.node = node;
-		this.sensorType = sensorType;
-		this.parent;
-		this.state;
+class LightActuator extends Actuator {
+	constructor({ node, type, mode, parent, status, order }) {
+		super(node, type, mode, parent, status);
 	}
-	configureSensor(children, sensorType) {
-		this.sensorType = sensorType;
-		this.children = children;
+	setSwitch(order) {
+		const object = { ...this, order };
+		const message = new ControlDevice(object);
+		return message.message;
 	}
 	get properties() {
 		return {
 			node: this.node,
-			actuatorType: this.actuatorType,
-			children: this.children,
-			state: this.state,
+			type: this.type,
+			mode: this.mode,
+			parent: this.parent,
+			status: this.status,
+			expectedTemperature: this.expectedTemperature,
 		};
 	}
 }
 
 class SwitchSensor extends Sensor {
-	constructor(node, sensorType, parent, state) {
-		super(node, sensorType, parent, state);
-	}
-	setSwitch(state) {
-		this.state = state;
+	constructor({ node, type, mode, children }) {
+		super(node, type, mode, children);
 	}
 }
 
 class TemperatureSensor extends Sensor {
-	constructor(node, sensorType, parent, state) {
-		super(node, sensorType, parent);
-		this.temperature = state;
+	constructor({
+		node,
+		type,
+		mode,
+		children,
+		temperature,
+		expectedTemperature,
+	}) {
+		super(node, type, mode, children);
+		this.temperature = temperature;
+		this.expectedTemperature = expectedTemperature;
 	}
-	setSwitch(state) {
-		this.state = state;
+	setExpectedTemperature(temperature) {
+		this.expectedTemperature = temperature;
 	}
 }
 
 module.exports = {
-	Device,
 	Actuator,
 	TemperatureActuator,
+	LightActuator,
 	Sensor,
 	SwitchSensor,
 	TemperatureSensor,

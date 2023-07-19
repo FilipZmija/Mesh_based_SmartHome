@@ -24,24 +24,49 @@ Scheduler userScheduler;  // to control your personal task
 painlessMesh mesh;
 bool buttonState;
 bool prevButtonState;
-WiFiClient client;
-String nodeID = String(mesh.getNodeId());
-String childrenID = "2808636797";
-String sensorType = "switchSensor";
 bool toggleState = 0;
+WiFiClient client;
+
+//Device info
+String nodeID = "";
+String childrenID = "2808636797";
+String type = "sensor";
+String mode = "switch";
+String order = "off";
+String requestType = "post/control";
 //creating JSON object
 
-String getReadings(String nodeID, bool switchState) {
-  JSONVar jsonReadings;
-  jsonReadings["node"] = nodeID;
-  jsonReadings["sensorType"] = sensorType;
-  jsonReadings["switch"] = switchState;
-  jsonReadings["children"] = childrenID;
-  String readings = JSON.stringify(jsonReadings);
-  return readings;
-};
+String createIndentifyMessage(String requestType, String nodeID, String type, String mode, String parentID) {
+  StaticJsonDocument<200> jsonDoc;
+  JsonObject headers = jsonDoc.createNestedObject("headers");
+  JsonObject body = jsonDoc.createNestedObject("body");
+  headers["type"] = requestType;
+  body["node"] = nodeID;
+  body["type"] = type;
+  body["mode"] = mode;
+  body["parent"] = parentID;
+  String jsonString;
+  serializeJson(jsonDoc, jsonString);
+  return jsonString;
+}
 
-String data = getReadings(nodeID, toggleState);
+String createMessage(String nodeID, String order, String requestType) {
+
+  StaticJsonDocument<200> jsonDoc;
+  JsonObject headers = jsonDoc.createNestedObject("headers");
+  JsonObject body = jsonDoc.createNestedObject("body");
+  headers["type"] = requestType;
+  body["node"] = nodeID;
+  body["type"] = type;
+  body["mode"] = mode;
+  body["children"] = childrenID;
+  body["order"] = order;
+  String jsonString;
+  serializeJson(jsonDoc, jsonString);
+  return jsonString;
+}
+
+String data = createMessage(nodeID, order, requestType);
 
 
 
@@ -69,7 +94,16 @@ void sendMessage() {
 
 // Needed for painless library
 void receivedCallback(uint32_t from, String& msg) {
-  Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
+  StaticJsonDocument<400> jsonDoc;
+  DeserializationError error = deserializeJson(jsonDoc, msg.c_str());
+  String requestType = jsonDoc["headers"]["type"];
+
+  if (requestType == "post/devices") {
+    String message = createIndentifyMessage("post/indentifyDevice ", nodeID, type, mode, childrenID);
+    mesh.sendBroadcast(message);
+  }
+
+  Serial.printf(msg.c_str());
 }
 
 void newConnectionCallback(uint32_t nodeId) {
@@ -120,11 +154,11 @@ void setup() {
   mesh.onNewConnection(&newConnectionCallback);
   mesh.onChangedConnections(&changedConnectionCallback);
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
+  nodeID = String(mesh.getNodeId());
+
   userScheduler.addTask(taskSendMessage);
   mesh.setContainsRoot(true);
   taskSendMessage.enable();
-
-  
 }
 
 
@@ -133,16 +167,12 @@ void loop() {
   // it will run the user scheduler as well
   const bool newToggle = toggle(toggleState);
   if (newToggle != toggleState) {
-    toggleState = newToggle;
+    order = "toggle";
     String msg = "You toggled button to state = ";
     msg += newToggle;
-    String nodeID = "";
-    nodeID += mesh.getNodeId();
 
-    data = getReadings(nodeID, toggleState);
+    data = createMessage(nodeID, order, requestType);
     mesh.sendBroadcast(data);
-    String conn = mesh.subConnectionJson();
-    Serial.println(conn);
   }
   mesh.update();
 }
