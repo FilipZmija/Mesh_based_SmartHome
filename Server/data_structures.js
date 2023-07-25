@@ -1,9 +1,9 @@
 class ControlDevice {
-	constructor({ node, type, mode, parent, order }) {
-		this.node = node;
+	constructor({ node, type, mode, order }) {
+		this.node = "server";
 		this.type = type;
 		this.mode = mode;
-		this.parent = parent;
+		this.children = node;
 		this.order = order;
 	}
 	get message() {
@@ -11,10 +11,21 @@ class ControlDevice {
 			node: this.node,
 			type: this.type,
 			mode: this.mode,
-			parent: this.parent,
+			children: this.children,
 			order: this.order,
 		};
 	}
+}
+
+function sendConfigurationMessage(actuator, sensor) {
+	const message = {
+		headers: { type: "post/configure" },
+		body: {
+			childrenID: actuator,
+			parentID: sensor,
+		},
+	};
+	return message;
 }
 
 class Sensor {
@@ -24,9 +35,7 @@ class Sensor {
 		this.mode = mode;
 		this.children = children;
 	}
-	configure(children) {
-		this.children = children;
-	}
+
 	get properties() {
 		return {
 			node: this.node,
@@ -45,9 +54,7 @@ class Actuator {
 		this.parent = parent;
 		this.status = status;
 	}
-	configure(parent) {
-		this.parent = parent;
-	}
+
 	get properties() {
 		return {
 			node: this.node,
@@ -60,7 +67,7 @@ class Actuator {
 }
 
 class TemperatureActuator extends Actuator {
-	constructor({ node, type, mode, parent, order }) {
+	constructor({ node, type, mode, parent }) {
 		super(node, type, mode, parent);
 	}
 
@@ -77,7 +84,17 @@ class TemperatureActuator extends Actuator {
 		this.order = undefined;
 		return message.message;
 	}
-
+	update({ node, type, mode, parent, status }) {
+		this.node = node;
+		this.type = type;
+		this.mode = mode;
+		this.parent = parent;
+		this.status = status;
+	}
+	configure(sensor) {
+		this.parent = sensor;
+		return sendConfigurationMessage(this.node, this.parent);
+	}
 	get properties() {
 		return {
 			node: this.node,
@@ -90,13 +107,24 @@ class TemperatureActuator extends Actuator {
 }
 
 class LightActuator extends Actuator {
-	constructor({ node, type, mode, parent, status, order }) {
+	constructor({ node, type, mode, parent, status }) {
 		super(node, type, mode, parent, status);
 	}
 	setSwitch(order) {
 		const object = { ...this, order };
 		const message = new ControlDevice(object);
 		return message.message;
+	}
+	update({ node, type, mode, parent, status }) {
+		this.node = node;
+		this.type = type;
+		this.mode = mode;
+		this.parent = parent;
+		this.status = status;
+	}
+	configure(sensor) {
+		this.parent = sensor;
+		return sendConfigurationMessage(this.node, this.parent);
 	}
 	get properties() {
 		return {
@@ -105,7 +133,6 @@ class LightActuator extends Actuator {
 			mode: this.mode,
 			parent: this.parent,
 			status: this.status,
-			expectedTemperature: this.expectedTemperature,
 		};
 	}
 }
@@ -113,6 +140,17 @@ class LightActuator extends Actuator {
 class SwitchSensor extends Sensor {
 	constructor({ node, type, mode, children }) {
 		super(node, type, mode, children);
+	}
+	configure(actuator) {
+		this.children = actuator;
+		return sendConfigurationMessage(this.children, this.node);
+	}
+
+	update({ node, type, mode, children }) {
+		this.node = node;
+		this.type = type;
+		this.mode = mode;
+		this.children = children;
 	}
 }
 
@@ -129,8 +167,18 @@ class TemperatureSensor extends Sensor {
 		this.temperature = temperature;
 		this.expectedTemperature = expectedTemperature;
 	}
+	configure(children) {
+		this.children = children;
+		return sendConfigurationMessage(this.children, this.node);
+	}
 	setExpectedTemperature(temperature) {
 		this.expectedTemperature = temperature;
+	}
+	update({ node, type, mode, children }) {
+		this.node = node;
+		this.type = type;
+		this.mode = mode;
+		this.children = children;
 	}
 }
 

@@ -26,7 +26,7 @@ void sendMessage();  // Prototype so PlatformIO doesn't complain
 //Device info
 
 String nodeID = "";
-String parentID = "701010689";
+String parentID = "";
 String type = "actuator";  // "RTC";
 String mode = "light";
 
@@ -60,6 +60,7 @@ String createIndentifyMessage(String requestType, String nodeID, String type, St
   body["type"] = type;
   body["mode"] = mode;
   body["parent"] = parentID;
+
   String jsonString;
   serializeJson(jsonDoc, jsonString);
   return jsonString;
@@ -104,8 +105,21 @@ void receivedCallback(uint32_t from, String &msg) {
         temperature = recivedTemperature;
     }
   } else if (requestType == "post/devices") {
-    String message = createIndentifyMessage("post/indentifyDevice ", nodeID, type, mode, parentID);
+    String message = createIndentifyMessage("post/indentifyDevice", nodeID, type, mode, parentID);
     mesh.sendBroadcast(message);
+  } else if (requestType == "post/configure") {
+    JsonObject body = jsonDoc["body"];
+    String jsonString;
+    serializeJson(body, jsonString);
+
+    String recivedNodeID = body["childrenID"];
+    String recivedParentID = body["parentID"];
+    if (recivedNodeID == nodeID) {
+      parentID = recivedParentID;
+    }
+    String message = createIndentifyMessage("post/indentifyDevice", nodeID, type, mode, parentID);
+    mesh.sendBroadcast(message);
+    
   }
 
   Serial.println(msg.c_str());

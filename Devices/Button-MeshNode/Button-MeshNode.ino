@@ -29,14 +29,14 @@ WiFiClient client;
 
 //Device info
 String nodeID = "";
-String childrenID = "2808636797";
+String childrenID = "";
 String type = "sensor";
 String mode = "switch";
 String order = "off";
 String requestType = "post/control";
 //creating JSON object
 
-String createIndentifyMessage(String requestType, String nodeID, String type, String mode, String parentID) {
+String createIndentifyMessage(String requestType, String nodeID, String type, String mode, String childrenID) {
   StaticJsonDocument<200> jsonDoc;
   JsonObject headers = jsonDoc.createNestedObject("headers");
   JsonObject body = jsonDoc.createNestedObject("body");
@@ -44,7 +44,7 @@ String createIndentifyMessage(String requestType, String nodeID, String type, St
   body["node"] = nodeID;
   body["type"] = type;
   body["mode"] = mode;
-  body["parent"] = parentID;
+  body["parent"] = childrenID;
   String jsonString;
   serializeJson(jsonDoc, jsonString);
   return jsonString;
@@ -99,10 +99,21 @@ void receivedCallback(uint32_t from, String& msg) {
   String requestType = jsonDoc["headers"]["type"];
 
   if (requestType == "post/devices") {
-    String message = createIndentifyMessage("post/indentifyDevice ", nodeID, type, mode, childrenID);
+    String message = createIndentifyMessage("post/indentifyDevice", nodeID, type, mode, childrenID);
+    mesh.sendBroadcast(message);
+  } else if (requestType == "post/configure") {
+    JsonObject body = jsonDoc["body"];
+    String jsonString;
+    serializeJson(body, jsonString);
+
+    String recivedNodeID = body["parentID"];
+    String recivedChildrenID = body["childrenID"];
+    if (recivedNodeID == nodeID) {
+      childrenID = recivedChildrenID;
+    }
+    String message = createIndentifyMessage("post/indentifyDevice", nodeID, type, mode, childrenID);
     mesh.sendBroadcast(message);
   }
-
   Serial.printf(msg.c_str());
 }
 
