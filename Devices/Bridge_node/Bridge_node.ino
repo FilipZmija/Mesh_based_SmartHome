@@ -25,6 +25,14 @@ IPAddress myIP(0, 0, 0, 0);
 
 WiFiClient client;
 
+//Device info
+String nodeID = "";
+String childrenID = "";
+String type = "sensor";
+String mode = "bridge";
+String order = "off";
+String requestType = "post/control";
+
 // prototypes
 void receivedCallback(uint32_t from, String &msg);
 
@@ -41,7 +49,7 @@ String createSystemDevicesMessage(String devices) {
   return jsonString;
 }
 
-String createIndentifyMessage(String requestType, String nodeID, String type, String mode, String parentID) {
+String createIndentifyMessage(String requestType, String nodeID, String type, String mode, String childrenID) {
   StaticJsonDocument<200> jsonDoc;
   JsonObject headers = jsonDoc.createNestedObject("headers");
   JsonObject body = jsonDoc.createNestedObject("body");
@@ -49,7 +57,7 @@ String createIndentifyMessage(String requestType, String nodeID, String type, St
   body["node"] = nodeID;
   body["type"] = type;
   body["mode"] = mode;
-  body["parent"] = parentID;
+  body["children"] = childrenID;
   String jsonString;
   serializeJson(jsonDoc, jsonString);
   return jsonString;
@@ -71,7 +79,7 @@ void setup() {
   mesh.setRoot(true);
   // This node and all other nodes should ideally know the mesh contains a root, so call this on all nodes
   mesh.setContainsRoot(true);
-
+  nodeID = String(mesh.getNodeId());
 
   mesh.onReceive(&receivedCallback);
   while (!client.connected()) {
@@ -102,9 +110,9 @@ void loop() {
       node++;
     }
     String devicesRequest = createSystemDevicesMessage(nodesString);
-    mesh.sendBroadcast("#" + devicesRequest);
+    mesh.sendBroadcast(devicesRequest);
     String message = "#";
-    message += devicesRequest;
+    message += createIndentifyMessage("post/indentifyDevice", nodeID, type, mode, childrenID);
     client.print(message);
     previousTime = currentTime;
   }
