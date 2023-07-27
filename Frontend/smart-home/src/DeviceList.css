@@ -1,0 +1,33 @@
+.device-list {
+	width: 200px;
+	position: absolute;
+	top: 20px;
+	right: 600px;
+	background-color: #fff;
+	box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+	border-radius: 4px;
+	padding: 20px;
+	transition: right 0.3s ease;
+}
+
+/* Rest of the CSS remains the same */
+
+.device-list h2 {
+	font-size: 18px;
+	margin-bottom: 10px;
+}
+
+.device-list ul {
+	list-style: none;
+	padding: 0;
+}
+
+.device-list li {
+	font-size: 16px;
+	margin-bottom: 8px;
+	cursor: pointer;
+}
+
+.device-list li:hover {
+	color: #007bff;
+}
