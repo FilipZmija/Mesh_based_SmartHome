@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 
 const Line = ({ div1Pos, div2Pos, devices }) => {
-	console.log(div1Pos, div2Pos);
 	const [lineLength, setLineLength] = useState(0);
 
 	// Update the line length whenever the divs' positions change

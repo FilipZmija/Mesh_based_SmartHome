@@ -1,0 +1,68 @@
+/* DeviceList.css */
+.html {
+	background-color: #f5f5f5;
+}
+.deviceee-list {
+	background-color: #f5f5f5;
+	padding: 20px;
+	border-radius: 10px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.deviceee {
+	display: flex; /* Add flex display */
+	justify-content: space-between; /* Align children to start and end of the container */
+	background-color: #ffffff;
+	padding: 10px;
+	margin: 10px 0;
+	border-radius: 5px;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.deviceee h3 {
+	margin: 0;
+}
+
+.deviceee p {
+	margin: 0;
+	color: #333;
+}
+
+ul {
+	list-style-type: none;
+	padding: 0;
+}
+.temp {
+	display: flex;
+	justify-content: flex-end; /* Align the content to the right */
+	align-items: center; /* Vertically center content */
+}
+.tempp {
+	display: flex;
+	align-items: center; /* Vertically center content */
+	flex-direction: column;
+}
+.tempp button {
+	background-color: #007bff;
+	color: #fff;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	padding: 5px 10px;
+	margin: 0 5px;
+}
+
+.tempp button:hover {
+	background-color: #0056b3;
+}
+
+.tempp span {
+	font-size: 1.2rem;
+	margin: 0 10px;
+}
+
+/* Add transition for smooth animation */
+.tempp button,
+.tempp span {
+	transition: background-color 0.3s ease-in-out;
+}
