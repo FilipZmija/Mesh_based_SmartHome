@@ -34,14 +34,27 @@ class Sensor {
 		this.type = type;
 		this.mode = mode;
 		this.children = children;
+		this.divPos;
+		this.id;
 	}
-
+	addToPlan(divPos, isSelected, id) {
+		this.divPos = divPos;
+		this.isSelected = isSelected;
+		this.id = id;
+	}
+	setSelected(state) {
+		this.isSelected = state;
+	}
 	get properties() {
 		return {
 			node: this.node,
 			type: this.type,
 			mode: this.mode,
+			status: this.status,
 			children: this.children,
+			divPos: this.divPos,
+			isSelected: this.isSelected,
+			id: this.id,
 		};
 	}
 }
@@ -53,8 +66,18 @@ class Actuator {
 		this.mode = mode;
 		this.parent = parent;
 		this.status = status;
+		this.divPos;
+		this.isSelected;
+		this.id;
 	}
-
+	addToPlan(divPos, isSelected, id) {
+		this.divPos = divPos;
+		this.isSelected = isSelected;
+		this.id = id;
+	}
+	setSelected(state) {
+		this.isSelected = state;
+	}
 	get properties() {
 		return {
 			node: this.node,
@@ -62,13 +85,16 @@ class Actuator {
 			mode: this.mode,
 			status: this.status,
 			parent: this.parent,
+			divPos: this.divPos,
+			isSelected: this.isSelected,
+			id: this.id,
 		};
 	}
 }
 
 class TemperatureActuator extends Actuator {
-	constructor({ node, type, mode, parent }) {
-		super(node, type, mode, parent);
+	constructor({ node, type, mode, parent, divPos, isSelected, id }) {
+		super(node, type, mode, parent, divPos, isSelected, id);
 	}
 
 	setSwitch(order, sensorsInSystem) {
@@ -95,20 +121,35 @@ class TemperatureActuator extends Actuator {
 		this.parent = sensor;
 		return sendConfigurationMessage(this.node, this.parent);
 	}
+	addToPlan(divPos, isSelected, id) {
+		this.divPos = divPos;
+		this.isSelected = isSelected;
+		this.id = id;
+	}
+	moveAround(divPos) {
+		this.divPos = divPos;
+	}
+	setSelected(state) {
+		this.isSelected = state;
+	}
+
 	get properties() {
 		return {
 			node: this.node,
 			type: this.type,
 			mode: this.mode,
-			parent: this.parent,
 			status: this.status,
+			parent: this.parent,
+			divPos: this.divPos,
+			isSelected: this.isSelected,
+			id: this.id,
 		};
 	}
 }
 
 class LightActuator extends Actuator {
-	constructor({ node, type, mode, parent, status }) {
-		super(node, type, mode, parent, status);
+	constructor({ node, type, mode, parent, status, divPos, isSelected, id }) {
+		super(node, type, mode, parent, status, divPos, isSelected, id);
 	}
 	setSwitch(order) {
 		const object = { ...this, order };
@@ -126,20 +167,35 @@ class LightActuator extends Actuator {
 		this.parent = sensor;
 		return sendConfigurationMessage(this.node, this.parent);
 	}
+	addToPlan(divPos, isSelected, id) {
+		this.divPos = divPos;
+		this.isSelected = isSelected;
+		this.id = id;
+	}
+	moveAround(divPos) {
+		this.divPos = divPos;
+	}
+	setSelected(state) {
+		this.isSelected = state;
+	}
+
 	get properties() {
 		return {
 			node: this.node,
 			type: this.type,
 			mode: this.mode,
-			parent: this.parent,
 			status: this.status,
+			parent: this.parent,
+			divPos: this.divPos,
+			isSelected: this.isSelected,
+			id: this.id,
 		};
 	}
 }
 
 class SwitchSensor extends Sensor {
-	constructor({ node, type, mode, children }) {
-		super(node, type, mode, children);
+	constructor({ node, type, mode, children, divPos, isSelected, id }) {
+		super(node, type, mode, children, divPos, isSelected, id);
 	}
 	configure(actuator) {
 		this.children = actuator;
@@ -152,6 +208,29 @@ class SwitchSensor extends Sensor {
 		this.mode = mode;
 		this.children = children;
 	}
+	addToPlan(divPos, isSelected, id) {
+		this.divPos = divPos;
+		this.isSelected = isSelected;
+		this.id = id;
+	}
+	moveAround(divPos) {
+		this.divPos = divPos;
+	}
+	setSelected(state) {
+		this.isSelected = state;
+	}
+	get properties() {
+		return {
+			node: this.node,
+			type: this.type,
+			mode: this.mode,
+			status: this.status,
+			children: this.children,
+			divPos: this.divPos,
+			isSelected: this.isSelected,
+			id: this.id,
+		};
+	}
 }
 
 class TemperatureSensor extends Sensor {
@@ -162,8 +241,11 @@ class TemperatureSensor extends Sensor {
 		children,
 		temperature,
 		expectedTemperature,
+		divPos,
+		isSelected,
+		id,
 	}) {
-		super(node, type, mode, children);
+		super(node, type, mode, children, divPos, isSelected, id);
 		this.temperature = temperature;
 		this.expectedTemperature = expectedTemperature;
 	}
@@ -179,6 +261,29 @@ class TemperatureSensor extends Sensor {
 		this.type = type;
 		this.mode = mode;
 		this.children = children;
+	}
+	addToPlan(divPos, isSelected, id) {
+		this.divPos = divPos;
+		this.isSelected = isSelected;
+		this.id = id;
+	}
+	moveAround(divPos) {
+		this.divPos = divPos;
+	}
+	setSelected(state) {
+		this.isSelected = state;
+	}
+	get properties() {
+		return {
+			node: this.node,
+			type: this.type,
+			mode: this.mode,
+			status: this.status,
+			children: this.children,
+			divPos: this.divPos,
+			isSelected: this.isSelected,
+			id: this.id,
+		};
 	}
 }
 

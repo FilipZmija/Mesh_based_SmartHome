@@ -1,10 +1,3 @@
-/*
-  Rui Santos
-  Complete project details at https://RandomNerdTutorials.com/esp-mesh-esp32-esp8266-painlessmesh/
-  
-  This is a simple example that uses the painlessMesh library: https://github.com/gmag11/painlessMesh/blob/master/examples/basic/basic.ino
-*/
-
 #include "painlessMesh.h"
 #include <Arduino_JSON.h>
 
@@ -27,8 +20,8 @@ void sendMessage();  // Prototype so PlatformIO doesn't complain
 
 String nodeID = "";
 String parentID = "";
-String type = "actuator";  // "RTC";
-String mode = "light";
+String type = "sensor";  // "RTC";
+String mode = "heating";
 
 bool status = 0;
 bool switchState = 0;
